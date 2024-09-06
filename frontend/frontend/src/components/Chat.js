@@ -10,14 +10,26 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
+    socket.on('connect', () => {
+      console.log('Connected to server with socket ID:', socket.id);
+    });
+  
+    // Receive previous messages from the server
+    socket.on('previousMessages', (msgs) => {
+      setMessages(msgs);  // Set previous messages
+    });
+  
+    // Receive new messages in real time
     socket.on('receiveMessage', (msg) => {
       setMessages((prevMessages) => [...prevMessages, msg]);
     });
-
+  
     return () => {
+      socket.off('previousMessages');
       socket.off('receiveMessage');
     };
   }, []);
+  
 
   // const handleSendMessage = () => {
   //   socket.emit('sendMessage', message);

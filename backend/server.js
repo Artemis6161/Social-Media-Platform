@@ -4,6 +4,8 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors'); 
 const authRoute = require("./routes/authroutes");
+const Message = require('./models/message');  
+
 const app = express();
 app.use(express.json());
 require('dotenv').config();
@@ -31,18 +33,36 @@ const io = socketIo(server, {
 });
 
 // Socket.io connection setup
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   console.log('A user connected:', socket.id);
 
-  socket.on('sendMessage', (message) => {
-    console.log('Message received:', message);
-    io.emit('receiveMessage', message);
+  // Fetch and send previous messages when the client connects
+  try {
+    const messages = await Message.find().sort({ timestamp: 1 });  // Fetch all messages sorted by timestamp
+    socket.emit('previousMessages', messages);  // Send previous messages to the client
+  } catch (err) {
+    console.error('Error fetching messages:', err);
+  }
+
+  socket.on('sendMessage', async (message) => {
+    const newMessage = new Message({
+      content: message.content,
+      sender: message.sender
+    });
+
+    try {
+      const savedMessage = await newMessage.save();
+      io.emit('receiveMessage', savedMessage);  // Emit saved message to all clients
+    } catch (err) {
+      console.error('Error saving message:', err);
+    }
   });
 
   socket.on('disconnect', () => {
     console.log('User disconnected');
   });
 });
+
 
 // route
 app.use("/api/auth", authRoute);
