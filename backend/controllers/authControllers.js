@@ -56,11 +56,12 @@ exports.loginUser = async (req, res) => {
 };
 
 exports.getUserProfile = async (req, res) => {
-    const user = await User.findById(req.user.id).select('-password');
-
-    if (user) {
-        res.json(user);
-    } else {
-        res.status(404).json({ message: 'User not found' });
-    }
+    const token = req.header('Authorization').replace('Bearer ', '');
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await User.findById(decoded.userId).select('-password');
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(401).json({ message: 'Unauthorized' });
+  }
 };
