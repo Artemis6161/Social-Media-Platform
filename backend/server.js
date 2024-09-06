@@ -1,11 +1,20 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const http = require('http');
 const socketIo = require('socket.io');
-const cors = require('cors'); // Import CORS
+const cors = require('cors'); 
 const authRoute = require("./routes/authroutes");
 const app = express();
+app.use(express.json());
+require('dotenv').config();
 const server = http.createServer(app);
 
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("MongoDB is  connected successfully"))
+.catch((err) => console.error(err));
 // Allow CORS
 app.use(cors({
   origin: 'http://localhost:3000', // URL of your frontend
